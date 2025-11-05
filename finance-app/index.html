@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستم مدیریت مالی شخصی</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --income: #27ae60;
+            --expense: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--dark), #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            display: flex;
+            background: #34495e;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-item {
+            flex: 1;
+            padding: 18px;
+            text-align: center;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+            min-width: 140px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: #2c3e50;
+            border-bottom: 4px solid var(--primary);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: var(--dark);
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 12px;
+        }
+        
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .transactions-table th {
+            background: linear-gradient(135deg, var(--primary), #2980b9);
+            color: white;
+            padding: 18px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .transactions-table td {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--light);
+            transition: all 0.3s ease;
+        }
+        
+        .transactions-table tr:hover td {
+            background: #f8f9fa;
+        }
+        
+        .amount-positive {
+            color: var(--income);
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .amount-negative {
+            color: var(--expense);
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .transaction-type {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .type-income {
+            background: #d5f4e6;
+            color: var(--income);
+        }
+        
+        .type-expense {
+            background: #fdeaea;
+            color: var(--expense);
+        }
+        
+        .date {
+            color: var(--gray);
+            font-size: 0.95em;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .summary-card.income {
+            border-left-color: var(--income);
+        }
+        
+        .summary-card.expense {
+            border-left-color: var(--expense);
+        }
+        
+        .summary-card h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .summary-card .amount {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .summary-card.income .amount {
+            color: var(--income);
+        }
+        
+        .summary-card.expense .amount {
+            color: var(--expense);
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h3 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-danger {
+            background: var(--expense);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+        
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+            
+            .transactions-table {
+                font-size: 0.85em;
+            }
+            
+            .transactions-table th,
+            .transactions-table td {
+                padding: 12px 6px;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .summary {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .content {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .section-title {
+                font-size: 1.5em;
+            }
+            
+            .form-container, .chart-card, .summary-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>سیستم مدیریت مالی شخصی</h1>
+            <p>ثبت هزینه‌ها و مشاهده گزارش‌های نموداری</p>
+        </div>
+
+        <div class="nav">
+            <a href="#" class="nav-item active" data-target="transactions">تراکنش‌ها</a>
+            <a href="#" class="nav-item" data-target="add-transaction">ثبت تراکنش جدید</a>
+            <a href="#" class="nav-item" data-target="reports">گزارش‌ها و نمودارها</a>
+        </div>
+
+        <div class="content">
+            <div id="transactions" class="content-section">
+                <h2 class="section-title">تراکنش‌ها</h2>
+
+                <div class="summary">
+                    <div class="summary-card income">
+                        <h3>مجموع درآمد</h3>
+                        <div class="amount" id="total-income">۰ تومان</div>
+                        <p>تعداد تراکنش: <span id="income-count">۰</span></p>
+                    </div>
+                    <div class="summary-card expense">
+                        <h3>مجموع هزینه</h3>
+                        <div class="amount" id="total-expense">۰ تومان</div>
+                        <p>تعداد تراکنش: <span id="expense-count">۰</span></p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>موجودی</h3>
+                        <div class="amount" id="balance" style="color: var(--primary);">۰ تومان</div>
+                        <p>مانده حساب</p>
+                    </div>
+                </div>
+
+                <div id="transactions-container">
+                    <table class="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>نوع تراکنش</th>
+                                <th>مبلغ</th>
+                                <th>شرح</th>
+                                <th>دسته‌بندی</th>
+                                <th>تاریخ</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body">
+                        </tbody>
+                    </table>
+                    <div id="empty-transactions" class="empty-state hidden">
+                        <i>📊</i>
+                        <h3>هنوز تراکنشی ثبت نکرده‌اید</h3>
+                        <p>برای شروع، اولین تراکنش خود را ثبت کنید</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="add-transaction" class="content-section hidden">
+                <h2 class="section-title">ثبت تراکنش جدید</h2>
+                
+                <div class="form-container">
+                    <form id="transaction-form">
+                        <div class="form-group">
+                            <label for="type">نوع تراکنش:</label>
+                            <select id="type" class="form-control" required>
+                                <option value="income">درآمد</option>
+                                <option value="expense">هزینه</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount">مبلغ (تومان):</label>
+                            <input type="number" id="amount" class="form-control" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">شرح تراکنش:</label>
+                            <input type="text" id="description" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">دسته‌بندی:</label>
+                            <select id="category" class="form-control" required>
+                                <option value="حقوق">حقوق</option>
+                                <option value="فریلنس">فریلنس</option>
+                                <option value="سایر درآمد">سایر درآمد</option>
+                                <option value="خوراک">خوراک</option>
+                                <option value="پوشاک">پوشاک</option>
+                                <option value="مسکن">مسکن</option>
+                                <option value="حمل و نقل">حمل و نقل</option>
+                                <option value="تفریح">تفریح</option>
+                                <option value="سایر هزینه">سایر هزینه</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date">تاریخ:</label>
+                            <input type="date" id="date" class="form-control" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">ثبت تراکنش</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="reports" class="content-section hidden">
+                <h2 class="section-title">گزارش‌ها و نمودارها</h2>
+                
+                <div id="charts-empty" class="empty-state hidden">
+                    <i>📈</i>
+                    <h3>داده‌ای برای نمایش وجود ندارد</h3>
+                    <p>برای مشاهده نمودارها، لطفاً تراکنش‌هایی ثبت کنید</p>
+                </div>
+                
+                <div id="charts-container" class="charts-container">
+                    <div class="chart-card">
+                        <h3>نمودار دایره‌ای درآمد و هزینه</h3>
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>نمودار خطی تراکنش‌ها در طول زمان</h3>
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>نمودار میله‌ای دسته‌بندی هزینه‌ها</h3>
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>نمودار مقایسه‌ای ماهانه</h3>
+                        <div class="chart-container">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let transactions = [];
+
+        document.getElementById('date').valueAsDate = new Date();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTransactions();
+            updateSummary();
+            initCharts();
+            setupNavigation();
+        });
+
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    contentSections.forEach(section => section.classList.add('hidden'));
+                    
+                    this.classList.add('active');
+                    
+                    const targetId = this.getAttribute('data-target');
+                    document.getElementById(targetId).classList.remove('hidden');
+                    
+                    if (targetId === 'reports') {
+                        updateCharts();
+                    }
+                });
+            });
+        }
+
+        document.getElementById('transaction-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('type').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+            
+            const newTransaction = {
+                id: transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1,
+                type: type,
+                amount: amount,
+                description: description,
+                category: category,
+                date: date
+            };
+            
+            transactions.push(newTransaction);
+            renderTransactions();
+            updateSummary();
+            
+            this.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            
+            alert('تراکنش با موفقیت ثبت شد!');
+            
+            document.querySelector('.nav-item[data-target="transactions"]').click();
+        });
+
+        function deleteTransaction(id) {
+            if (confirm('آیا از حذف این تراکنش مطمئن هستید؟')) {
+                transactions = transactions.filter(t => t.id !== id);
+                renderTransactions();
+                updateSummary();
+            }
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('transactions-body');
+            const emptyState = document.getElementById('empty-transactions');
+            
+            tbody.innerHTML = '';
+            
+            if (transactions.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                
+                const typeCell = document.createElement('td');
+                typeCell.innerHTML = `<span class="transaction-type ${transaction.type === 'income' ? 'type-income' : 'type-expense'}">${transaction.type === 'income' ? 'درآمد' : 'هزینه'}</span>`;
+                
+                const amountCell = document.createElement('td');
+                amountCell.className = transaction.type === 'income' ? 'amount-positive' : 'amount-negative';
+                amountCell.textContent = `${transaction.type === 'income' ? '+' : '-'} ${transaction.amount.toLocaleString()} تومان`;
+                
+                const descriptionCell = document.createElement('td');
+                descriptionCell.textContent = transaction.description;
+                
+                const categoryCell = document.createElement('td');
+                categoryCell.textContent = transaction.category;
+                
+                const dateCell = document.createElement('td');
+                dateCell.className = 'date';
+                const dateObj = new Date(transaction.date);
+                dateCell.textContent = dateObj.toLocaleDateString('fa-IR');
+                
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `<button class="btn btn-danger" onclick="deleteTransaction(${transaction.id})">حذف</button>`;
+                
+                row.appendChild(typeCell);
+                row.appendChild(amountCell);
+                row.appendChild(descriptionCell);
+                row.appendChild(categoryCell);
+                row.appendChild(dateCell);
+                row.appendChild(actionsCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSummary() {
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            const totalExpense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            const incomeCount = transactions.filter(t => t.type === 'income').length;
+            const expenseCount = transactions.filter(t => t.type === 'expense').length;
+            const balance = totalIncome - totalExpense;
+            
+            document.getElementById('total-income').textContent = `${totalIncome.toLocaleString()} تومان`;
+            document.getElementById('total-expense').textContent = `${totalExpense.toLocaleString()} تومان`;
+            document.getElementById('balance').textContent = `${balance.toLocaleString()} تومان`;
+            document.getElementById('income-count').textContent = incomeCount;
+            document.getElementById('expense-count').textContent = expenseCount;
+        }
+        let pieChart, lineChart, barChart, comparisonChart;
+        function initCharts() {
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['درآمد', 'هزینه'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#27ae60', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'درآمد',
+                            data: [],
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'هزینه',
+                            data: [],
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'هزینه بر اساس دسته‌بندی',
+                        data: [],
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            comparisonChart = new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'درآمد',
+                            data: [],
+                            backgroundColor: '#27ae60'
+                        },
+                        {
+                            label: 'هزینه',
+                            data: [],
+                            backgroundColor: '#e74c3c'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            updateCharts();
+        }
+
+        function updateCharts() {
+            const chartsContainer = document.getElementById('charts-container');
+            const emptyCharts = document.getElementById('charts-empty');
+            
+            if (transactions.length === 0) {
+                chartsContainer.classList.add('hidden');
+                emptyCharts.classList.remove('hidden');
+                return;
+            }
+            
+            chartsContainer.classList.remove('hidden');
+            emptyCharts.classList.add('hidden');
+            
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            const totalExpense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            pieChart.data.datasets[0].data = [totalIncome, totalExpense];
+            pieChart.update();
+            
+            const monthlyData = getMonthlyData();
+            lineChart.data.labels = monthlyData.labels;
+            lineChart.data.datasets[0].data = monthlyData.income;
+            lineChart.data.datasets[1].data = monthlyData.expense;
+            lineChart.update();
+            
+            const categoryData = getCategoryData();
+            barChart.data.labels = categoryData.labels;
+            barChart.data.datasets[0].data = categoryData.amounts;
+            barChart.update();
+            
+            comparisonChart.data.labels = monthlyData.labels;
+            comparisonChart.data.datasets[0].data = monthlyData.income;
+            comparisonChart.data.datasets[1].data = monthlyData.expense;
+            comparisonChart.update();
+        }
+
+        function getMonthlyData() {
+            const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 
+                           'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+            
+            const currentMonth = new Date().getMonth();
+            const labels = [];
+            const incomeData = [];
+            const expenseData = [];
+            
+            for (let i = 5; i >= 0; i--) {
+                const monthIndex = (currentMonth - i + 12) % 12;
+                labels.push(months[monthIndex]);
+                
+                const monthIncome = transactions
+                    .filter(t => {
+                        const transactionDate = new Date(t.date);
+                        return transactionDate.getMonth() === monthIndex && t.type === 'income';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                    
+                const monthExpense = transactions
+                    .filter(t => {
+                        const transactionDate = new Date(t.date);
+                        return transactionDate.getMonth() === monthIndex && t.type === 'expense';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                    
+                incomeData.push(monthIncome);
+                expenseData.push(monthExpense);
+            }
+            
+            return { labels, income: incomeData, expense: expenseData };
+        }
+
+        function getCategoryData() {
+            const categories = ['خوراک', 'پوشاک', 'مسکن', 'حمل و نقل', 'تفریح', 'سایر هزینه'];
+            const amounts = [];
+            
+            categories.forEach(category => {
+                const categoryAmount = transactions
+                    .filter(t => t.category === category && t.type === 'expense')
+                    .reduce((sum, t) => sum + t.amount, 0);
+                    
+                amounts.push(categoryAmount);
+            });
+            
+            return { labels: categories, amounts };
+        }
+    </script>
+</body>
+</html>
